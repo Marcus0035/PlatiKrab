@@ -1,0 +1,115 @@
+﻿@using PlatiKrab.Data
+@using PlatiKrab.Data.Models
+@inject PlatiKrabDbContext _context
+@inject NavigationManager NavigationManager
+
+@page "/trainings-list"
+
+<MudOverlay @bind-Visible="_showCalendar" DarkBackground="true" AutoClose="true">
+    <MudDatePicker PickerVariant="PickerVariant.Static" Date="_date" DateChanged="AddTraining" />
+</MudOverlay>
+
+
+<MudContainer Class="mt-5" MaxWidth="MaxWidth.Large">
+
+
+    <MudPaper Class="d-flex justify-content-between align-content-center pa-4 mb-5" Elevation="4">
+        <MudItem>
+            <MudTooltip Text="Unpaid/All Trainings">
+                <MudSwitch T="bool" Value="_showPaidTrainings" ValueChanged="ToggleUnpaidAllTrainings" Color="Color.Primary" />
+            </MudTooltip>
+        </MudItem>
+        <MudItem>
+            <MudTooltip Text="Add Training" Color="Color.Primary">
+                <MudButton Class="ms-5" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Color="Color.Primary" OnClick="OpenCalendar">
+                    Add Training
+                </MudButton>
+            </MudTooltip>
+        </MudItem>
+    </MudPaper>
+
+
+
+
+    @if (_trainings == null)
+    {
+        <MudText Typo="Typo.h6">Loading...</MudText>
+    }
+    else if (!_trainings.Any())
+    {
+        <MudText Typo="Typo.h6">No Trainings found.</MudText>
+        <MudIconButton Icon="@Icons.Material.Filled.Add" aria-label="Add" OnClick="OpenCalendar" />
+    }
+    else
+    {
+        <MudDataGrid T="Training" Items="_trainings" @bind-SelectedItem="_selectedTraining" RowClick="OpenTrainingDetails">
+            <Columns>
+                <SelectColumn T="Player" />
+                <PropertyColumn Property="p => p.TrainingId" Title="Id" />
+                <PropertyColumn Property='p => p.Date.ToString("dd-MM-yyyy")' Title="Date" />
+                <PropertyColumn Property="p => p.PlayerTrainings.Count()" Title="Players" />
+                <PropertyColumn Property='p => p.Payment != null ? (p.Payment.Paid ? "Yes" : "No") : "Unknown"' Title="Paid" />
+            </Columns>
+            <PagerContent>
+                <MudDataGridPager T="Player" />
+            </PagerContent>
+        </MudDataGrid>
+    }
+</MudContainer>
+
+
+@code {
+    private List<Training> _trainings = new();
+
+    private Training? _selectedTraining = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _trainings = await _context.GetUnpaidTrainingAsync();
+    }
+
+
+    private bool _showCalendar;
+
+    public void OpenCalendar()
+    {
+        _showCalendar = true;
+        StateHasChanged();
+    }
+
+    private DateTime? _date = DateTime.Today;
+
+    private async Task AddTraining(DateTime? newDate)
+    {
+        _date = newDate;
+
+        if (_date != null)
+        {
+            var t = new Training() { Date = _date.Value };
+            await _context.AddTrainingAsync(t);
+            _showCalendar = false;
+        }
+
+    }
+
+    private bool _showPaidTrainings;
+
+    private async Task ToggleUnpaidAllTrainings(bool value)
+    {
+        _showPaidTrainings = value;
+        if (_showPaidTrainings)
+        {
+            _trainings = await _context.GetTrainingsAsync();
+        }
+        else
+        {
+            _trainings = await _context.GetUnpaidTrainingAsync();
+        }
+    }
+
+    private void OpenTrainingDetails(DataGridRowClickEventArgs<Training> args)
+    {
+        var training = args.Item;
+        NavigationManager.NavigateTo($"/training-details/{training.TrainingId}");
+    }
+}

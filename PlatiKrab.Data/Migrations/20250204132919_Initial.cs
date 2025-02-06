@@ -15,54 +15,46 @@ namespace PlatiKrab.Data.Migrations
                 name: "Players",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                    PlayerId = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    Name = table.Column<string>(type: "TEXT", nullable: false),
+                    FirstName = table.Column<string>(type: "TEXT", nullable: false),
                     LastName = table.Column<string>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Players", x => x.Id);
+                    table.PrimaryKey("PK_Players", x => x.PlayerId);
                 });
 
             migrationBuilder.CreateTable(
                 name: "Trainings",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                    TrainingId = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    Date = table.Column<DateOnly>(type: "TEXT", nullable: false),
-                    PaymentId = table.Column<int>(type: "INTEGER", nullable: false)
+                    Date = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Trainings", x => x.Id);
+                    table.PrimaryKey("PK_Trainings", x => x.TrainingId);
                 });
 
             migrationBuilder.CreateTable(
                 name: "Payments",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                    PaymentId = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    IsPaid = table.Column<bool>(type: "INTEGER", nullable: false),
-                    TrainingId = table.Column<int>(type: "INTEGER", nullable: false),
-                    PlayerWhoPaysId = table.Column<int>(type: "INTEGER", nullable: false)
+                    Paid = table.Column<bool>(type: "INTEGER", nullable: false),
+                    TrainingId = table.Column<int>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Payments", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Payments_Players_PlayerWhoPaysId",
-                        column: x => x.PlayerWhoPaysId,
-                        principalTable: "Players",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                    table.PrimaryKey("PK_Payments", x => x.PaymentId);
                     table.ForeignKey(
                         name: "FK_Payments_Trainings_TrainingId",
                         column: x => x.TrainingId,
                         principalTable: "Trainings",
-                        principalColumn: "Id",
+                        principalColumn: "TrainingId",
                         onDelete: ReferentialAction.Cascade);
                 });
 
@@ -70,32 +62,63 @@ namespace PlatiKrab.Data.Migrations
                 name: "PlayerTrainings",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                    PlayerTrainingId = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     PlayerId = table.Column<int>(type: "INTEGER", nullable: false),
                     TrainingId = table.Column<int>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_PlayerTrainings", x => x.Id);
+                    table.PrimaryKey("PK_PlayerTrainings", x => x.PlayerTrainingId);
                     table.ForeignKey(
                         name: "FK_PlayerTrainings_Players_PlayerId",
                         column: x => x.PlayerId,
                         principalTable: "Players",
-                        principalColumn: "Id",
+                        principalColumn: "PlayerId",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_PlayerTrainings_Trainings_TrainingId",
                         column: x => x.TrainingId,
                         principalTable: "Trainings",
-                        principalColumn: "Id",
+                        principalColumn: "TrainingId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "PaymentPlayer",
+                columns: table => new
+                {
+                    PaymentPlayerId = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    PaymentId = table.Column<int>(type: "INTEGER", nullable: false),
+                    PlayerId = table.Column<int>(type: "INTEGER", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_PaymentPlayer", x => x.PaymentPlayerId);
+                    table.ForeignKey(
+                        name: "FK_PaymentPlayer_Payments_PaymentId",
+                        column: x => x.PaymentId,
+                        principalTable: "Payments",
+                        principalColumn: "PaymentId",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_PaymentPlayer_Players_PlayerId",
+                        column: x => x.PlayerId,
+                        principalTable: "Players",
+                        principalColumn: "PlayerId",
                         onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_Payments_PlayerWhoPaysId",
-                table: "Payments",
-                column: "PlayerWhoPaysId");
+                name: "IX_PaymentPlayer_PaymentId",
+                table: "PaymentPlayer",
+                column: "PaymentId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PaymentPlayer_PlayerId",
+                table: "PaymentPlayer",
+                column: "PlayerId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Payments_TrainingId",
@@ -118,10 +141,13 @@ namespace PlatiKrab.Data.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "Payments");
+                name: "PaymentPlayer");
 
             migrationBuilder.DropTable(
                 name: "PlayerTrainings");
+
+            migrationBuilder.DropTable(
+                name: "Payments");
 
             migrationBuilder.DropTable(
                 name: "Players");

@@ -1,9 +1,7 @@
 ﻿using Microsoft.Maui.Devices;
-using System;
-using System.IO;
-using System.Reflection;
 using Microsoft.Maui.Storage;
 using PlatiKrab.Data;
+using System.Reflection;
 
 namespace KeyChordFinder.Data
 {
@@ -12,7 +10,8 @@ namespace KeyChordFinder.Data
         public static void CopyIfDoesntExist(string dbName, Assembly assembly)
         {
             string dbPath = GetDbPath(dbName);
-            if (!File.Exists(dbPath))
+            bool overwrite = true; // Změň na false, pokud nechceš přepisovat
+            if (overwrite || !File.Exists(dbPath))
             {
                 using (var stream = GetEmbeddedResourceStream(dbName, assembly))
                 {
@@ -29,7 +28,7 @@ namespace KeyChordFinder.Data
         {
             using (var context = new PlatiKrabDbContext())
             {
-                context.Players.Select(x => x.Id).ToList();
+                context.Players.Select(x => x.PlayerId).ToList();
             }
         }
 

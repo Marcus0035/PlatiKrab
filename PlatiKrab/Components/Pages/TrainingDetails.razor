@@ -1,0 +1,104 @@
+﻿@using PlatiKrab.Data
+@using PlatiKrab.Data.Models
+
+@inject PlatiKrabDbContext _context
+@inject ISnackbar Snackbar
+
+@page "/training-details/{TrainingId:int?}"
+
+<MudContainer Class="mt-5" MaxWidth="MaxWidth.Large">
+    <MudPaper Class="pa-4 mb-5 d-flex" Elevation="4">
+        <MudSelect Label="Select Training" T="Training" Value="_selectedTraining" ValueChanged="OnTrainingChanged">
+            @foreach (var training in _trainings)
+            {
+                    <MudSelectItem Value="@training.TrainingId">@training.Date.ToString("dd-MM-yyyy")</MudSelectItem>
+            }
+        </MudSelect>
+        <MudFab StartIcon="@Icons.Material.Filled.Save" Label="Save" DropShadow="false" Class="ms-5" Color="Color.Primary" Disabled="@_saveDisable" OnClick="SaveTraining" />
+    </MudPaper>
+
+    @if (_selectedTraining != null)
+    {
+            <MudGrid>
+                <MudItem xs="12" sm="6">
+                    <MudPaper Class="pa-4 mb-5" Elevation="4">
+                        <MudText Typo="Typo.h6" Class="mb-3 d-flex justify-content-center">Players not on training</MudText>
+                        <MudList T="Player">
+                        @foreach (var player in _playerNotOnTraining)
+                        {
+                                    <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                                    Class="mb-3" OnClick="() => AddPlayerToTraining(player)" FullWidth="true">
+                                @player.FirstName @player.LastName
+                                    </MudButton>
+                        }
+                        </MudList>
+                    </MudPaper>
+                </MudItem>
+
+                <MudItem xs="12" sm="6">
+                    <MudPaper Class="pa-4 mb-5" Elevation="4">
+                        <MudText Typo="Typo.h6" Class="mb-3 d-flex justify-content-center">Players on training</MudText>
+                        <MudList T="Player">
+                        @foreach (var player in _playersOnTraining)
+                        {
+                                    <MudButton Variant="Variant.Filled" Color="Color.Secondary"
+                                    Class="mb-3" OnClick="() => RemovePlayerFromTraining(player)" FullWidth="true">
+                                @player.FirstName @player.LastName
+                                    </MudButton>
+                        }
+                        </MudList>
+                    </MudPaper>
+                </MudItem>
+            </MudGrid>
+    }
+</MudContainer>
+
+@code {
+    private List<Player> _players = new List<Player>();
+    private List<Training> _trainings = new List<Training>();
+    private Training? _selectedTraining;
+
+    private List<Player> _playersOnTraining = new List<Player>();
+    private List<Player> _playerNotOnTraining = new List<Player>();
+
+    [Parameter]
+    public int TrainingId { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        _players = await _context.GetActivePlayersAsync();
+        _trainings = await _context.GetUnpaidTrainingAsync();
+        if (TrainingId != 0)
+        {
+            _selectedTraining = await _context.GetTrainingByIdAsync(TrainingId);
+            await OnTrainingChanged(_selectedTraining);
+        }
+    }
+
+    private async Task OnTrainingChanged(Training training)
+    {
+        _selectedTraining = training;
+        _playersOnTraining = await _context.GetPlayersOnTrainingAsync(_selectedTraining);
+        _playerNotOnTraining = _players.Where(p => !_playersOnTraining.Any(pt => pt.PlayerId == p.PlayerId)).ToList();
+    }
+
+    private void AddPlayerToTraining(Player player)
+    {
+        _playersOnTraining.Add(player);
+        _playerNotOnTraining = _players.Where(p => !_playersOnTraining.Any(pt => pt.PlayerId == p.PlayerId)).ToList();
+    }
+
+    private void RemovePlayerFromTraining(Player player)
+    {
+        _playersOnTraining.Remove(player);
+        _playerNotOnTraining = _players.Where(p => !_playersOnTraining.Any(pt => pt.PlayerId == p.PlayerId)).ToList();
+    }
+
+    private bool _saveDisable => _selectedTraining == null;
+
+    private async Task SaveTraining()
+    {
+        await _context.AddOrEditTraining(_selectedTraining!, _playersOnTraining);
+        Snackbar.Add("Training saved", Severity.Success);
+    }
+}

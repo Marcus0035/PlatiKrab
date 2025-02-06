@@ -1,27 +1,36 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">PlatiKrab</a>
-    </div>
-</div>
+﻿<MudNavMenu>
+    <MudNavLink Href="/" Match="NavLinkMatch.All">
+        <MudIcon Icon="@Icons.Material.Filled.Dashboard" /> Dashboard
+    </MudNavLink>
+    <MudNavLink Href="/trainings-list" Match="NavLinkMatch.Prefix">
+        <MudIcon Icon="@Icons.Material.Filled.FitnessCenter" /> Trainings
+    </MudNavLink>
+    <MudNavLink Href="/training-details" Match="NavLinkMatch.Prefix">
+        <MudIcon Icon="@Icons.Material.Filled.FitScreen" /> Training Details
+    </MudNavLink>
+    <MudNavLink Href="/player-list" Match="NavLinkMatch.Prefix">
+        <MudIcon Icon="@Icons.Material.Filled.People" /> Players
+    </MudNavLink>
 
-<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
+    <MudNavGroup Title="Settings" Expanded="true">
+        <MudNavLink Href="/users" Match="NavLinkMatch.Prefix">
+            <MudIcon Icon="@Icons.Material.Filled.Person" /> Users
+        </MudNavLink>
 
-<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
-    <nav class="flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="counter">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Counter
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="weather">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather
-            </NavLink>
-        </div>
-    </nav>
-</div>
+        <MudNavLink>
+            <MudToggleIconButton @bind-Toggled="_isDarkMode"
+                                 Icon="@Icons.Material.Filled.DarkMode"
+                                 Color="@Color.Warning"
+                                 ToggledIcon="@Icons.Material.Filled.LightMode"
+                                 title="@(_isDarkMode ? "Light Mode" : "Dark Mode")" />
+        </MudNavLink>
+    </MudNavGroup>
+</MudNavMenu>
+
+<MudThemeProvider />
+<MudThemeProvider @bind-IsDarkMode="@_isDarkMode" Theme="_theme" />
+
+@code {
+    private readonly MudTheme _theme = new();
+    private bool _isDarkMode = true;
+}

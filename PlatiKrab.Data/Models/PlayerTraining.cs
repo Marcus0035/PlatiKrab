@@ -1,21 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace PlatiKrab.Data.Models
 {
     public class PlayerTraining
     {
         [Key]
-        public int Id { get; set; }
+        public int PlayerTrainingId { get; set; }
 
+        // FK na hráče
         public int PlayerId { get; set; }
-        public Player Player { get; set; } = new Player();
+        public Player Player { get; set; } = null!;
 
+        // FK na trénink
         public int TrainingId { get; set; }
-        public Training Training { get; set; } = new Training();
+        public Training Training { get; set; } = null!;
     }
 }

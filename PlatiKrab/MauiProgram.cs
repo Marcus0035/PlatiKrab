@@ -2,7 +2,6 @@
 using Microsoft.Extensions.Logging;
 using MudBlazor.Services;
 using PlatiKrab.Data;
-using PlatiKrab.Data.Models;
 using System.Reflection;
 
 namespace PlatiKrab
@@ -28,6 +27,8 @@ namespace PlatiKrab
             DbHelper.CopyIfDoesntExist("PlatiKrab.db", assembly);
             //Initialize the database for the first time
             DbHelper.DbInitializer();
+            //Add Context
+            builder.Services.AddDbContext<PlatiKrabDbContext>();
 
 
 #if DEBUG

@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PlatiKrab.Data;
 
@@ -10,9 +11,11 @@ using PlatiKrab.Data;
 namespace PlatiKrab.Data.Migrations
 {
     [DbContext(typeof(PlatiKrabDbContext))]
-    partial class PlatiKrabDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250204132919_Initial")]
+    partial class Initial
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.1");
@@ -62,9 +65,6 @@ namespace PlatiKrab.Data.Migrations
                 {
                     b.Property<int>("PlayerId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("Active")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("FirstName")

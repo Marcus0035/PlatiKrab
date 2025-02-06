@@ -58,11 +58,12 @@
     </ItemGroup>
 
     <ItemGroup>
-      <MauiAsset Remove="Resources\raw\PlatiKrab.db" />
+      <MauiAsset Remove="Resources\Raw\AboutAssets.txt" />
+      <MauiAsset Remove="Resources\Raw\PlatiKrab.db" />
     </ItemGroup>
 
     <ItemGroup>
-      <None Remove="Resources\Raw\PlatiKrab.db" />
+      <EmbeddedResource Include="Resources\Raw\AboutAssets.txt" />
     </ItemGroup>
 
     <ItemGroup>
