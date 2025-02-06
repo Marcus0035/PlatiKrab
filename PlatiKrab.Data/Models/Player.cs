@@ -13,6 +13,6 @@ namespace PlatiKrab.Data.Models
 
         // Vazební tabulky
         public List<PlayerTraining> PlayerTrainings { get; set; } = new();
-        public List<PaymentPlayer> PaymentPlayers { get; set; } = new();
+        public List<Payment> Payments { get; set; } = new();
     }
 }

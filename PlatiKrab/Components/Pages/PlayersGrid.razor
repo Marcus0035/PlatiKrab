@@ -36,7 +36,7 @@
                 <PropertyColumn Property="p => p.PlayerId" Title="Id" />
                 <PropertyColumn Property="p => p.FirstName + ' ' + p.LastName" Title="Name" />
                 <PropertyColumn Property="p => p.PlayerTrainings.Count()" Title="Trainings" />
-                <PropertyColumn Property="p => p.PaymentPlayers.Count()" Title="Payments" />
+                <PropertyColumn Property="p => p.Payments.Count()" Title="Payments" />
                 @if (_showNotActivePlayers)
                 {
                     <PropertyColumn Property="p => p.Active" Title="Active" />

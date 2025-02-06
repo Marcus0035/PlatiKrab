@@ -11,8 +11,8 @@ using PlatiKrab.Data;
 namespace PlatiKrab.Data.Migrations
 {
     [DbContext(typeof(PlatiKrabDbContext))]
-    [Migration("20250205140128_AddActiveBoolToPlayer")]
-    partial class AddActiveBoolToPlayer
+    [Migration("20250206181507_Initial")]
+    partial class Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -29,36 +29,20 @@ namespace PlatiKrab.Data.Migrations
                     b.Property<bool>("Paid")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int>("PlayerWhoPaysPlayerId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int>("TrainingId")
                         .HasColumnType("INTEGER");
 
                     b.HasKey("PaymentId");
 
+                    b.HasIndex("PlayerWhoPaysPlayerId");
+
                     b.HasIndex("TrainingId")
                         .IsUnique();
 
                     b.ToTable("Payments");
-                });
-
-            modelBuilder.Entity("PlatiKrab.Data.Models.PaymentPlayer", b =>
-                {
-                    b.Property<int>("PaymentPlayerId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("PaymentId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("PlayerId")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("PaymentPlayerId");
-
-                    b.HasIndex("PaymentId");
-
-                    b.HasIndex("PlayerId");
-
-                    b.ToTable("PaymentPlayer");
                 });
 
             modelBuilder.Entity("PlatiKrab.Data.Models.Player", b =>
@@ -120,32 +104,21 @@ namespace PlatiKrab.Data.Migrations
 
             modelBuilder.Entity("PlatiKrab.Data.Models.Payment", b =>
                 {
+                    b.HasOne("PlatiKrab.Data.Models.Player", "PlayerWhoPays")
+                        .WithMany("Payments")
+                        .HasForeignKey("PlayerWhoPaysPlayerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("PlatiKrab.Data.Models.Training", "Training")
                         .WithOne("Payment")
                         .HasForeignKey("PlatiKrab.Data.Models.Payment", "TrainingId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.Navigation("PlayerWhoPays");
+
                     b.Navigation("Training");
-                });
-
-            modelBuilder.Entity("PlatiKrab.Data.Models.PaymentPlayer", b =>
-                {
-                    b.HasOne("PlatiKrab.Data.Models.Payment", "Payment")
-                        .WithMany("PaymentPlayers")
-                        .HasForeignKey("PaymentId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("PlatiKrab.Data.Models.Player", "Player")
-                        .WithMany("PaymentPlayers")
-                        .HasForeignKey("PlayerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Payment");
-
-                    b.Navigation("Player");
                 });
 
             modelBuilder.Entity("PlatiKrab.Data.Models.PlayerTraining", b =>
@@ -167,14 +140,9 @@ namespace PlatiKrab.Data.Migrations
                     b.Navigation("Training");
                 });
 
-            modelBuilder.Entity("PlatiKrab.Data.Models.Payment", b =>
-                {
-                    b.Navigation("PaymentPlayers");
-                });
-
             modelBuilder.Entity("PlatiKrab.Data.Models.Player", b =>
                 {
-                    b.Navigation("PaymentPlayers");
+                    b.Navigation("Payments");
 
                     b.Navigation("PlayerTrainings");
                 });

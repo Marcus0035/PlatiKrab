@@ -20,11 +20,9 @@
             </MudTooltip>
         </MudItem>
         <MudItem>
-            <MudTooltip Text="Add Training" Color="Color.Primary">
-                <MudButton Class="ms-5" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Color="Color.Primary" OnClick="OpenCalendar">
-                    Add Training
-                </MudButton>
-            </MudTooltip>
+            <MudButton Class="ms-5" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Color="Color.Primary" OnClick="OpenCalendar">
+                Add Training
+            </MudButton>
         </MudItem>
     </MudPaper>
 
@@ -38,20 +36,19 @@
     else if (!_trainings.Any())
     {
         <MudText Typo="Typo.h6">No Trainings found.</MudText>
-        <MudIconButton Icon="@Icons.Material.Filled.Add" aria-label="Add" OnClick="OpenCalendar" />
     }
     else
     {
         <MudDataGrid T="Training" Items="_trainings" @bind-SelectedItem="_selectedTraining" RowClick="OpenTrainingDetails">
             <Columns>
-                <SelectColumn T="Player" />
+                <SelectColumn T="Training" />
                 <PropertyColumn Property="p => p.TrainingId" Title="Id" />
                 <PropertyColumn Property='p => p.Date.ToString("dd-MM-yyyy")' Title="Date" />
                 <PropertyColumn Property="p => p.PlayerTrainings.Count()" Title="Players" />
                 <PropertyColumn Property='p => p.Payment != null ? (p.Payment.Paid ? "Yes" : "No") : "Unknown"' Title="Paid" />
             </Columns>
             <PagerContent>
-                <MudDataGridPager T="Player" />
+                <MudDataGridPager T="Training" />
             </PagerContent>
         </MudDataGrid>
     }
@@ -85,9 +82,10 @@
 
         if (_date != null)
         {
-            var t = new Training() { Date = _date.Value };
-            await _context.AddTrainingAsync(t);
+            var training = new Training() { Date = _date.Value };
+            await _context.AddTrainingAsync(training);
             _showCalendar = false;
+            NavigationManager.NavigateTo($"/training-details/{training.TrainingId}");
         }
 
     }

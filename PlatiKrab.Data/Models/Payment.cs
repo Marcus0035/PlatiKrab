@@ -14,6 +14,6 @@ namespace PlatiKrab.Data.Models
         public Training Training { get; set; } = null!;
 
         // Vazební tabulka pro hráče
-        public List<PaymentPlayer> PaymentPlayers { get; set; } = new();
+        public Player PlayerWhoPays { get; set; } = new();
     }
 }

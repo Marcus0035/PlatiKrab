@@ -11,45 +11,56 @@
         <MudSelect Label="Select Training" T="Training" Value="_selectedTraining" ValueChanged="OnTrainingChanged">
             @foreach (var training in _trainings)
             {
-                    <MudSelectItem Value="@training.TrainingId">@training.Date.ToString("dd-MM-yyyy")</MudSelectItem>
+                <MudSelectItem Value="@training">@training.Date.ToString("dd-MM-yyyy")</MudSelectItem>
             }
         </MudSelect>
-        <MudFab StartIcon="@Icons.Material.Filled.Save" Label="Save" DropShadow="false" Class="ms-5" Color="Color.Primary" Disabled="@_saveDisable" OnClick="SaveTraining" />
+        <MudButton StartIcon="@Icons.Material.Filled.Save" Class="ms-5" Color="Color.Primary" Variant="Variant.Filled" Disabled="@_saveDisable" OnClick="SaveTraining">Save</MudButton>
+        <MudButton StartIcon="@Icons.Material.Filled.Payment" Class="ms-5" Color="Color.Success" Variant="Variant.Filled" Disabled="@_payDisable">Pay</MudButton>
     </MudPaper>
 
     @if (_selectedTraining != null)
     {
-            <MudGrid>
-                <MudItem xs="12" sm="6">
-                    <MudPaper Class="pa-4 mb-5" Elevation="4">
-                        <MudText Typo="Typo.h6" Class="mb-3 d-flex justify-content-center">Players not on training</MudText>
+        <MudGrid>
+            <MudItem xs="12" sm="6">
+                <MudPaper Class="pa-1 mb-5" Elevation="4">
+                    <MudText Typo="Typo.h6" Class="d-flex justify-content-center">Players not on training</MudText>
+                </MudPaper>
+                @if (_playerNotOnTraining.Any())
+                {
+                    <MudPaper Class="pa-4 mb-5 rounded-lg" Elevation="4">
                         <MudList T="Player">
-                        @foreach (var player in _playerNotOnTraining)
-                        {
-                                    <MudButton Variant="Variant.Filled" Color="Color.Primary"
-                                    Class="mb-3" OnClick="() => AddPlayerToTraining(player)" FullWidth="true">
-                                @player.FirstName @player.LastName
-                                    </MudButton>
-                        }
+                            @foreach (var player in _playerNotOnTraining)
+                            {
+                                <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                                Class="mb-3" OnClick="() => AddPlayerToTraining(player)" FullWidth="true">
+                                    @player.FirstName @player.LastName
+                                </MudButton>
+                            }
                         </MudList>
                     </MudPaper>
-                </MudItem>
+                }
+            </MudItem>
 
-                <MudItem xs="12" sm="6">
-                    <MudPaper Class="pa-4 mb-5" Elevation="4">
-                        <MudText Typo="Typo.h6" Class="mb-3 d-flex justify-content-center">Players on training</MudText>
+            <MudItem xs="12" sm="6">
+                <MudPaper Class="pa-1 mb-5" Elevation="4">
+                    <MudText Typo="Typo.h6" Class="d-flex justify-content-center">Players on training</MudText>
+                </MudPaper>
+                @if (_playersOnTraining.Any())
+                {
+                    <MudPaper Class="pa-4 mb-5 rounded-lg" Elevation="4">
                         <MudList T="Player">
-                        @foreach (var player in _playersOnTraining)
-                        {
-                                    <MudButton Variant="Variant.Filled" Color="Color.Secondary"
-                                    Class="mb-3" OnClick="() => RemovePlayerFromTraining(player)" FullWidth="true">
-                                @player.FirstName @player.LastName
-                                    </MudButton>
-                        }
+                            @foreach (var player in _playersOnTraining)
+                            {
+                                <MudButton Variant="Variant.Filled" Color="Color.Secondary"
+                                Class="mb-3" OnClick="() => RemovePlayerFromTraining(player)" FullWidth="true"
+                                >@player.FirstName @player.LastName
+                                </MudButton>
+                            }
                         </MudList>
                     </MudPaper>
-                </MudItem>
-            </MudGrid>
+                }
+            </MudItem>
+        </MudGrid>
     }
 </MudContainer>
 
@@ -95,10 +106,13 @@
     }
 
     private bool _saveDisable => _selectedTraining == null;
+    private bool _payDisable => _selectedTraining?.Payment?.Paid ?? false || _selectedTraining == null;
 
     private async Task SaveTraining()
     {
         await _context.AddOrEditTraining(_selectedTraining!, _playersOnTraining);
         Snackbar.Add("Training saved", Severity.Success);
     }
+
+
 }

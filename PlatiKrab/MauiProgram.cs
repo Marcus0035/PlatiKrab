@@ -34,6 +34,7 @@ namespace PlatiKrab
 #if DEBUG
             builder.Services.AddBlazorWebViewDeveloperTools();
     		builder.Logging.AddDebug();
+            
 #endif
 
             return builder.Build();

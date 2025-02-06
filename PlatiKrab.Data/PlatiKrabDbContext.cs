@@ -1,6 +1,7 @@
 ﻿using KeyChordFinder.Data;
 using Microsoft.EntityFrameworkCore;
 using PlatiKrab.Data.Models;
+using System.Collections;
 
 namespace PlatiKrab.Data
 {
@@ -10,9 +11,10 @@ namespace PlatiKrab.Data
         public DbSet<Training> Trainings { get; set; }
         public DbSet<PlayerTraining> PlayerTrainings { get; set; }
         public DbSet<Payment> Payments { get; set; }
+        //public DbSet<PaymentPlayer> PaymentPlayers { get; set; }
 
-        //private static readonly string ConnectionString = GetConnectionString("PlatiKrab.db");
-        private static readonly string ConnectionString = @"Data Source=C:\Users\marek\source\repos\PlatiKrab\PlatiKrab\Resources\Raw\PlatiKrab.db";
+        private static readonly string ConnectionString = GetConnectionString("PlatiKrab.db");
+        //private static readonly string ConnectionString = @"Data Source=C:\Users\marek\source\repos\PlatiKrab\PlatiKrab\Resources\Raw\PlatiKrab.db";
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             optionsBuilder.UseSqlite(ConnectionString);
@@ -31,8 +33,7 @@ namespace PlatiKrab.Data
             return await context.Players
                                     .Where(x => x.Active)
                                     .Include(x => x.PlayerTrainings).ThenInclude(x => x.Training)
-                                    .Include(x => x.PaymentPlayers).ThenInclude(x => x.Payment)
-                                    .ToListAsync();
+                                    .Include(x => x.Payments).ToListAsync();
         }
 
         public async Task<List<Player>> GetAllPlayersAsync()
@@ -40,8 +41,7 @@ namespace PlatiKrab.Data
             using var context = new PlatiKrabDbContext();
             return await context.Players
                                     .Include(x => x.PlayerTrainings).ThenInclude(x => x.Training)
-                                    .Include(x => x.PaymentPlayers).ThenInclude(x => x.Payment)
-                                    .ToListAsync();
+                                    .Include(x => x.Payments).ToListAsync();
         }
 
         public async Task AddPlayerAsync(Player player)
@@ -153,8 +153,42 @@ namespace PlatiKrab.Data
             await context.SaveChangesAsync();
         }
 
+        public async Task<Dictionary<Player, int>> GetPlayersCountTrainings(List<Player> players)
+        {
+            using var context = new PlatiKrabDbContext();
+            var playersCountTrainings = new Dictionary<Player, int>();
+            foreach (var player in players)
+            {
+                var count = await context.PlayerTrainings.CountAsync(x => x.PlayerId == player.PlayerId);
+                playersCountTrainings.Add(player, count);
+            }
+            return playersCountTrainings;
+        }
+
+        public async Task<Dictionary<Player, int>> GetPlayersCountPayments(List<Player> players)
+        {
+            using var context = new PlatiKrabDbContext();
+            var playersCountPayments = new Dictionary<Player, int>();
+            foreach (var player in players)
+            {
+                var count = await context.Payments.CountAsync(x => x.PlayerWhoPays.PlayerId == player.PlayerId);
+            }
+            return playersCountPayments;
+        }
 
 
+        public async Task AddPaymentAsync(Payment payment)
+        {
+            using var context = new PlatiKrabDbContext();
+            context.Payments.Add(payment);
+            await context.SaveChangesAsync();
+        }
 
+        public async Task UpdatePaymentAsync(Payment payment)
+        {
+            using var context = new PlatiKrabDbContext();
+            context.Payments.Update(payment);
+            await context.SaveChangesAsync();
+        }
     }
 }

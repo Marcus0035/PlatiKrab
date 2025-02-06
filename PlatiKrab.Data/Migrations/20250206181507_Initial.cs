@@ -18,7 +18,8 @@ namespace PlatiKrab.Data.Migrations
                     PlayerId = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     FirstName = table.Column<string>(type: "TEXT", nullable: false),
-                    LastName = table.Column<string>(type: "TEXT", nullable: false)
+                    LastName = table.Column<string>(type: "TEXT", nullable: false),
+                    Active = table.Column<bool>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -45,11 +46,18 @@ namespace PlatiKrab.Data.Migrations
                     PaymentId = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     Paid = table.Column<bool>(type: "INTEGER", nullable: false),
-                    TrainingId = table.Column<int>(type: "INTEGER", nullable: false)
+                    TrainingId = table.Column<int>(type: "INTEGER", nullable: false),
+                    PlayerWhoPaysPlayerId = table.Column<int>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Payments", x => x.PaymentId);
+                    table.ForeignKey(
+                        name: "FK_Payments_Players_PlayerWhoPaysPlayerId",
+                        column: x => x.PlayerWhoPaysPlayerId,
+                        principalTable: "Players",
+                        principalColumn: "PlayerId",
+                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_Payments_Trainings_TrainingId",
                         column: x => x.TrainingId,
@@ -84,41 +92,10 @@ namespace PlatiKrab.Data.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
-            migrationBuilder.CreateTable(
-                name: "PaymentPlayer",
-                columns: table => new
-                {
-                    PaymentPlayerId = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    PaymentId = table.Column<int>(type: "INTEGER", nullable: false),
-                    PlayerId = table.Column<int>(type: "INTEGER", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_PaymentPlayer", x => x.PaymentPlayerId);
-                    table.ForeignKey(
-                        name: "FK_PaymentPlayer_Payments_PaymentId",
-                        column: x => x.PaymentId,
-                        principalTable: "Payments",
-                        principalColumn: "PaymentId",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_PaymentPlayer_Players_PlayerId",
-                        column: x => x.PlayerId,
-                        principalTable: "Players",
-                        principalColumn: "PlayerId",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
             migrationBuilder.CreateIndex(
-                name: "IX_PaymentPlayer_PaymentId",
-                table: "PaymentPlayer",
-                column: "PaymentId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_PaymentPlayer_PlayerId",
-                table: "PaymentPlayer",
-                column: "PlayerId");
+                name: "IX_Payments_PlayerWhoPaysPlayerId",
+                table: "Payments",
+                column: "PlayerWhoPaysPlayerId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Payments_TrainingId",
@@ -141,13 +118,10 @@ namespace PlatiKrab.Data.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "PaymentPlayer");
+                name: "Payments");
 
             migrationBuilder.DropTable(
                 name: "PlayerTrainings");
-
-            migrationBuilder.DropTable(
-                name: "Payments");
 
             migrationBuilder.DropTable(
                 name: "Players");
