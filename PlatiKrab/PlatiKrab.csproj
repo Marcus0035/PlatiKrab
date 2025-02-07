@@ -81,6 +81,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\PlatiKrab.Data\PlatiKrab.Data.csproj" />
+      <ProjectReference Include="..\PlatiKrab.Services\PlatiKrab.Services.csproj" />
     </ItemGroup>
 
 </Project>

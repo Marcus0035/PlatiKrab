@@ -1,8 +1,5 @@
 ﻿<MudNavMenu>
-    <MudNavLink Href="/" Match="NavLinkMatch.All">
-        <MudIcon Icon="@Icons.Material.Filled.Dashboard" /> Dashboard
-    </MudNavLink>
-    <MudNavLink Href="/trainings-list" Match="NavLinkMatch.Prefix">
+    <MudNavLink Href="/" Match="NavLinkMatch.Prefix">
         <MudIcon Icon="@Icons.Material.Filled.FitnessCenter" /> Trainings
     </MudNavLink>
     <MudNavLink Href="/training-details" Match="NavLinkMatch.Prefix">
@@ -13,9 +10,6 @@
     </MudNavLink>
 
     <MudNavGroup Title="Settings" Expanded="true">
-        <MudNavLink Href="/users" Match="NavLinkMatch.Prefix">
-            <MudIcon Icon="@Icons.Material.Filled.Person" /> Users
-        </MudNavLink>
 
         <MudNavLink>
             <MudToggleIconButton @bind-Toggled="_isDarkMode"

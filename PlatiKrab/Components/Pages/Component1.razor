@@ -1,0 +1,46 @@
+﻿<MudMessageBox @ref="messageBox"
+    Title="Warning"
+    Content="Deleting cannot be undone!"
+    YesText="Delete!"
+    NoText="Cancel"
+    OnYes="OnYes"
+    OnNo="OnNo"
+    OnCancel="OnCancel"
+    VisibleChanged="OnVisibleChanged">
+</MudMessageBox>
+
+<MudButton Variant="Variant.Filled" Color="Color.Error" OnClick="OnButtonClicked">Delete</MudButton>
+
+<MudChip T="string">@state</MudChip>
+
+@code
+{
+    private MudMessageBox messageBox;
+
+    string state = "Message box hasn't been opened yet";
+
+    private async Task OnButtonClicked()
+    {
+        await messageBox.ShowAsync();
+    }
+
+    private void OnYes(bool result)
+    {
+        state = "Deleted!";
+    }
+
+    private void OnNo(bool result)
+    {
+        state = "Canceled";
+    }
+
+    private void OnCancel(bool result)
+    {
+        state = "Closed without selection";
+    }
+
+    private void OnVisibleChanged(bool isVisible)
+    {
+        Console.WriteLine($"Dialog visibility changed: {isVisible}");
+    }
+}

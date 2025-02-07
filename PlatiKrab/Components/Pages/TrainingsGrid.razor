@@ -1,9 +1,10 @@
 ﻿@using PlatiKrab.Data
 @using PlatiKrab.Data.Models
 @inject PlatiKrabDbContext _context
-@inject NavigationManager NavigationManager
+@inject NavigationManager _navigationManager
+@inject ISnackbar _snackBar
 
-@page "/trainings-list"
+@page "/"
 
 <MudOverlay @bind-Visible="_showCalendar" DarkBackground="true" AutoClose="true">
     <MudDatePicker PickerVariant="PickerVariant.Static" Date="_date" DateChanged="AddTraining" />
@@ -20,7 +21,7 @@
             </MudTooltip>
         </MudItem>
         <MudItem>
-            <MudButton Class="ms-5" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Color="Color.Primary" OnClick="OpenCalendar">
+            <MudButton Class="ms-5" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Color="Color.Primary" OnClick="OpenNewTrainingMessageBox">
                 Add Training
             </MudButton>
         </MudItem>
@@ -39,14 +40,19 @@
     }
     else
     {
-        <MudDataGrid T="Training" Items="_trainings" @bind-SelectedItem="_selectedTraining" RowClick="OpenTrainingDetails">
+        <MudDataGrid T="Training" Items="_trainings" ShowColumnOptions="false" RowClick="OpenTrainingDetails">
             <Columns>
                 <SelectColumn T="Training" />
                 <PropertyColumn Property="p => p.TrainingId" Title="Id" />
                 <PropertyColumn Property='p => p.Date.ToString("dd-MM-yyyy")' Title="Date" />
-                <PropertyColumn Property="p => p.PlayerTrainings.Count()" Title="Players" />
-                <PropertyColumn Property='p => p.Payment != null ? (p.Payment.Paid ? "Yes" : "No") : "Unknown"' Title="Paid" />
+                <PropertyColumn Property="p => p.Players.Count()" Title="Players" />
+                <PropertyColumn Property='p => p.Payment != null && p.Payment.Player != null ? $"{p.Payment.Player.FirstName} {p.Payment.Player.LastName}" : "Unknown"' Title="Who Pays" />
+                @if (_showPaidTrainings)
+                {
+                    <PropertyColumn Property='p => p.Payment != null ? (p.Payment.Paid ? "Yes" : "No") : "Unknown"' Title="Paid" />
+                }
             </Columns>
+
             <PagerContent>
                 <MudDataGridPager T="Training" />
             </PagerContent>
@@ -54,6 +60,29 @@
     }
 </MudContainer>
 
+<MudMessageBox @ref="_mudMessageBox" Title="Today?">
+    <MessageContent>
+        Was the training today: @DateTime.Now.ToString("dd-MM-yyyy")?
+    </MessageContent>
+    <YesButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Success" Class="ms-5" StartIcon="@Icons.Material.Filled.Check" OnClick="() => AddTraining(DateTime.Now)">Yes</MudButton>
+    </YesButton>
+    <NoButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.FreeCancellation" OnClick="OpenCalendar">No</MudButton>
+    </NoButton>
+</MudMessageBox>
+
+@code
+{
+    private MudMessageBox _mudMessageBox;
+
+    private async Task OpenNewTrainingMessageBox()
+    {
+        DialogOptions _width = new() { MaxWidth = MaxWidth.Small, FullWidth = true };
+        bool? result = await _mudMessageBox.ShowAsync(_width);
+        StateHasChanged();
+    }
+}
 
 @code {
     private List<Training> _trainings = new();
@@ -62,7 +91,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        _trainings = await _context.GetUnpaidTrainingAsync();
+        _trainings = await _context.GetUnPaidTrainingsAsync();
     }
 
 
@@ -85,7 +114,7 @@
             var training = new Training() { Date = _date.Value };
             await _context.AddTrainingAsync(training);
             _showCalendar = false;
-            NavigationManager.NavigateTo($"/training-details/{training.TrainingId}");
+            _navigationManager.NavigateTo($"/training-details/{training.TrainingId}");
         }
 
     }
@@ -101,13 +130,45 @@
         }
         else
         {
-            _trainings = await _context.GetUnpaidTrainingAsync();
+            _trainings = await _context.GetUnPaidTrainingsAsync();
         }
     }
 
-    private void OpenTrainingDetails(DataGridRowClickEventArgs<Training> args)
+    private async Task OpenTrainingDetails(DataGridRowClickEventArgs<Training> args)
     {
         var training = args.Item;
-        NavigationManager.NavigateTo($"/training-details/{training.TrainingId}");
+
+        if (training.Payment == null)
+        {
+            _navigationManager.NavigateTo($"/training-details/{training.TrainingId}");
+        }
+        else if (training.Payment.Paid)
+        {
+            _snackBar.Add($"Training {training.Date.ToString("dd-MM-yyyy")} is already paid", Severity.Info);
+        }
+        else if (!training.Payment.Paid)
+        {
+            await OpenChangePaymentStatusDialog(training);
+        }
+    }
+
+    [Inject] private IDialogService DialogService { get; set; }
+    private async Task OpenChangePaymentStatusDialog(Training t)
+    {
+        DialogOptions _width = new() { MaxWidth = MaxWidth.Small, FullWidth = true };
+        bool? result = await DialogService.ShowMessageBox(
+            "Do you want to change payment to Paid?",
+            $"Player who pay: {t.Payment.Player.FirstName} {t.Payment.Player.LastName}?",
+            yesText: "Yes", cancelText: "Cancel",
+            options: _width);
+        StateHasChanged();
+
+        if (result == true)
+        {
+            await _context.ChangePaymentStatusAsync(t);
+            _snackBar.Add($"Training {t.Date.ToString("dd-MM-yyyy")} payment status changed to PAID", Severity.Success);
+            _trainings = await _context.GetUnPaidTrainingsAsync();
+            StateHasChanged();
+        }
     }
 }

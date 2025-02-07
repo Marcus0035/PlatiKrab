@@ -47,17 +47,16 @@ namespace PlatiKrab.Data.Migrations
                         .Annotation("Sqlite:Autoincrement", true),
                     Paid = table.Column<bool>(type: "INTEGER", nullable: false),
                     TrainingId = table.Column<int>(type: "INTEGER", nullable: false),
-                    PlayerWhoPaysPlayerId = table.Column<int>(type: "INTEGER", nullable: false)
+                    PlayerId = table.Column<int>(type: "INTEGER", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Payments", x => x.PaymentId);
                     table.ForeignKey(
-                        name: "FK_Payments_Players_PlayerWhoPaysPlayerId",
-                        column: x => x.PlayerWhoPaysPlayerId,
+                        name: "FK_Payments_Players_PlayerId",
+                        column: x => x.PlayerId,
                         principalTable: "Players",
-                        principalColumn: "PlayerId",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "PlayerId");
                     table.ForeignKey(
                         name: "FK_Payments_Trainings_TrainingId",
                         column: x => x.TrainingId,
@@ -67,35 +66,33 @@ namespace PlatiKrab.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "PlayerTrainings",
+                name: "PlayerTraining",
                 columns: table => new
                 {
-                    PlayerTrainingId = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    PlayerId = table.Column<int>(type: "INTEGER", nullable: false),
-                    TrainingId = table.Column<int>(type: "INTEGER", nullable: false)
+                    PlayersPlayerId = table.Column<int>(type: "INTEGER", nullable: false),
+                    TrainingsTrainingId = table.Column<int>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_PlayerTrainings", x => x.PlayerTrainingId);
+                    table.PrimaryKey("PK_PlayerTraining", x => new { x.PlayersPlayerId, x.TrainingsTrainingId });
                     table.ForeignKey(
-                        name: "FK_PlayerTrainings_Players_PlayerId",
-                        column: x => x.PlayerId,
+                        name: "FK_PlayerTraining_Players_PlayersPlayerId",
+                        column: x => x.PlayersPlayerId,
                         principalTable: "Players",
                         principalColumn: "PlayerId",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_PlayerTrainings_Trainings_TrainingId",
-                        column: x => x.TrainingId,
+                        name: "FK_PlayerTraining_Trainings_TrainingsTrainingId",
+                        column: x => x.TrainingsTrainingId,
                         principalTable: "Trainings",
                         principalColumn: "TrainingId",
                         onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_Payments_PlayerWhoPaysPlayerId",
+                name: "IX_Payments_PlayerId",
                 table: "Payments",
-                column: "PlayerWhoPaysPlayerId");
+                column: "PlayerId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Payments_TrainingId",
@@ -104,14 +101,9 @@ namespace PlatiKrab.Data.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_PlayerTrainings_PlayerId",
-                table: "PlayerTrainings",
-                column: "PlayerId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_PlayerTrainings_TrainingId",
-                table: "PlayerTrainings",
-                column: "TrainingId");
+                name: "IX_PlayerTraining_TrainingsTrainingId",
+                table: "PlayerTraining",
+                column: "TrainingsTrainingId");
         }
 
         /// <inheritdoc />
@@ -121,7 +113,7 @@ namespace PlatiKrab.Data.Migrations
                 name: "Payments");
 
             migrationBuilder.DropTable(
-                name: "PlayerTrainings");
+                name: "PlayerTraining");
 
             migrationBuilder.DropTable(
                 name: "Players");

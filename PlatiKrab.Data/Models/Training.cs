@@ -10,10 +10,7 @@ namespace PlatiKrab.Data.Models
         public int TrainingId { get; set; }
         public DateTime Date { get; set; }
 
-        // Vazební tabulka
-        public List<PlayerTraining> PlayerTrainings { get; set; } = new();
-
-        // Může mít platbu, ale nemusí
         public Payment? Payment { get; set; }
+        public List<Player> Players { get; set; } = new();
     }
 }

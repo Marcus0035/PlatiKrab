@@ -26,7 +26,7 @@ namespace PlatiKrab.Data.Migrations
                     b.Property<bool>("Paid")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("PlayerWhoPaysPlayerId")
+                    b.Property<int?>("PlayerId")
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("TrainingId")
@@ -34,7 +34,7 @@ namespace PlatiKrab.Data.Migrations
 
                     b.HasKey("PaymentId");
 
-                    b.HasIndex("PlayerWhoPaysPlayerId");
+                    b.HasIndex("PlayerId");
 
                     b.HasIndex("TrainingId")
                         .IsUnique();
@@ -64,27 +64,6 @@ namespace PlatiKrab.Data.Migrations
                     b.ToTable("Players");
                 });
 
-            modelBuilder.Entity("PlatiKrab.Data.Models.PlayerTraining", b =>
-                {
-                    b.Property<int>("PlayerTrainingId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("PlayerId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("TrainingId")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("PlayerTrainingId");
-
-                    b.HasIndex("PlayerId");
-
-                    b.HasIndex("TrainingId");
-
-                    b.ToTable("PlayerTrainings");
-                });
-
             modelBuilder.Entity("PlatiKrab.Data.Models.Training", b =>
                 {
                     b.Property<int>("TrainingId")
@@ -99,36 +78,30 @@ namespace PlatiKrab.Data.Migrations
                     b.ToTable("Trainings");
                 });
 
+            modelBuilder.Entity("PlayerTraining", b =>
+                {
+                    b.Property<int>("PlayersPlayerId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("TrainingsTrainingId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("PlayersPlayerId", "TrainingsTrainingId");
+
+                    b.HasIndex("TrainingsTrainingId");
+
+                    b.ToTable("PlayerTraining");
+                });
+
             modelBuilder.Entity("PlatiKrab.Data.Models.Payment", b =>
                 {
-                    b.HasOne("PlatiKrab.Data.Models.Player", "PlayerWhoPays")
+                    b.HasOne("PlatiKrab.Data.Models.Player", "Player")
                         .WithMany("Payments")
-                        .HasForeignKey("PlayerWhoPaysPlayerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("PlayerId");
 
                     b.HasOne("PlatiKrab.Data.Models.Training", "Training")
                         .WithOne("Payment")
                         .HasForeignKey("PlatiKrab.Data.Models.Payment", "TrainingId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("PlayerWhoPays");
-
-                    b.Navigation("Training");
-                });
-
-            modelBuilder.Entity("PlatiKrab.Data.Models.PlayerTraining", b =>
-                {
-                    b.HasOne("PlatiKrab.Data.Models.Player", "Player")
-                        .WithMany("PlayerTrainings")
-                        .HasForeignKey("PlayerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("PlatiKrab.Data.Models.Training", "Training")
-                        .WithMany("PlayerTrainings")
-                        .HasForeignKey("TrainingId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -137,18 +110,29 @@ namespace PlatiKrab.Data.Migrations
                     b.Navigation("Training");
                 });
 
+            modelBuilder.Entity("PlayerTraining", b =>
+                {
+                    b.HasOne("PlatiKrab.Data.Models.Player", null)
+                        .WithMany()
+                        .HasForeignKey("PlayersPlayerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("PlatiKrab.Data.Models.Training", null)
+                        .WithMany()
+                        .HasForeignKey("TrainingsTrainingId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("PlatiKrab.Data.Models.Player", b =>
                 {
                     b.Navigation("Payments");
-
-                    b.Navigation("PlayerTrainings");
                 });
 
             modelBuilder.Entity("PlatiKrab.Data.Models.Training", b =>
                 {
                     b.Navigation("Payment");
-
-                    b.Navigation("PlayerTrainings");
                 });
 #pragma warning restore 612, 618
         }

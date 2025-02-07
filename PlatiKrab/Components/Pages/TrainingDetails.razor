@@ -1,7 +1,10 @@
 ﻿@using PlatiKrab.Data
 @using PlatiKrab.Data.Models
+@using PlatiKrab.Services
 
 @inject PlatiKrabDbContext _context
+@inject PlayersService _playersService
+@inject NavigationManager _navigationManager
 @inject ISnackbar Snackbar
 
 @page "/training-details/{TrainingId:int?}"
@@ -15,7 +18,7 @@
             }
         </MudSelect>
         <MudButton StartIcon="@Icons.Material.Filled.Save" Class="ms-5" Color="Color.Primary" Variant="Variant.Filled" Disabled="@_saveDisable" OnClick="SaveTraining">Save</MudButton>
-        <MudButton StartIcon="@Icons.Material.Filled.Payment" Class="ms-5" Color="Color.Success" Variant="Variant.Filled" Disabled="@_payDisable">Pay</MudButton>
+        <MudButton StartIcon="@Icons.Material.Filled.Payment" Class="ms-5" Color="Color.Success" Variant="Variant.Filled" Disabled="@_payDisable" OnClick="WhoPay">Pay</MudButton>
     </MudPaper>
 
     @if (_selectedTraining != null)
@@ -78,10 +81,10 @@
     protected override async Task OnInitializedAsync()
     {
         _players = await _context.GetActivePlayersAsync();
-        _trainings = await _context.GetUnpaidTrainingAsync();
+        _trainings = await _context.GetUnPaidTrainingsAsync();
         if (TrainingId != 0)
         {
-            _selectedTraining = await _context.GetTrainingByIdAsync(TrainingId);
+            _selectedTraining = _trainings.First(t => t.TrainingId == TrainingId);
             await OnTrainingChanged(_selectedTraining);
         }
     }
@@ -89,7 +92,7 @@
     private async Task OnTrainingChanged(Training training)
     {
         _selectedTraining = training;
-        _playersOnTraining = await _context.GetPlayersOnTrainingAsync(_selectedTraining);
+        _playersOnTraining = await _context.GetPlayersFromTrainingAsync(_selectedTraining.TrainingId);
         _playerNotOnTraining = _players.Where(p => !_playersOnTraining.Any(pt => pt.PlayerId == p.PlayerId)).ToList();
     }
 
@@ -106,13 +109,47 @@
     }
 
     private bool _saveDisable => _selectedTraining == null;
-    private bool _payDisable => _selectedTraining?.Payment?.Paid ?? false || _selectedTraining == null;
+    private bool _payDisable => _saveDisable || _selectedTraining?.Payment != null || _playersOnTraining.Count == 0;
+
 
     private async Task SaveTraining()
     {
-        await _context.AddOrEditTraining(_selectedTraining!, _playersOnTraining);
+        await _context.UpdatePlayersOnTrainingAsync((int)_selectedTraining!.TrainingId, _playersOnTraining);
         Snackbar.Add("Training saved", Severity.Success);
     }
 
+    Player playerWhoPay = new Player();
+    private async Task WhoPay()
+    {
+        Training training = _trainings.First(x => x.TrainingId == TrainingId);
+        if (training.Payment == null && _playersOnTraining.Count > 0)
+        {
+            await _context.UpdatePlayersOnTrainingAsync((int)_selectedTraining!.TrainingId, _playersOnTraining);
+            playerWhoPay = _playersService.GetPlayerWithMostRatio(_playersOnTraining);
+        }
+        await OpenDeleteDialog();
+    }
 
+    [Inject] private IDialogService DialogService { get; set; }
+    private async Task OpenDeleteDialog()
+    {
+        DialogOptions _width = new() { MaxWidth = MaxWidth.Small, FullWidth = true };
+        bool? result = await DialogService.ShowMessageBox(
+            "Plati Krab?",
+            $"{playerWhoPay.FirstName} {playerWhoPay.LastName}",
+            yesText: "Save", cancelText: "Cancel",
+            options: _width);
+        StateHasChanged();
+
+        if (result == true)
+        {
+            var training = _trainings.First(t => t.TrainingId == TrainingId);
+            var newPayment = new Payment(false, (int)TrainingId!, training, playerWhoPay.PlayerId, playerWhoPay);
+            await _context.AddPayment(newPayment);
+            _navigationManager.NavigateTo($"/");
+        }
+    }
+
+
+        
 }

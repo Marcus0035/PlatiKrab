@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using MudBlazor.Services;
 using PlatiKrab.Data;
 using System.Reflection;
+using PlatiKrab.Services;
 
 namespace PlatiKrab
 {
@@ -29,6 +30,7 @@ namespace PlatiKrab
             DbHelper.DbInitializer();
             //Add Context
             builder.Services.AddDbContext<PlatiKrabDbContext>();
+            builder.Services.AddSingleton<PlayersService>();
 
 
 #if DEBUG

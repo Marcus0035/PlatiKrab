@@ -11,8 +11,7 @@ namespace PlatiKrab.Data.Models
         public string LastName { get; set; } = "";
         public bool Active { get; set; } = true;
 
-        // Vazební tabulky
-        public List<PlayerTraining> PlayerTrainings { get; set; } = new();
+        public List<Training> Trainings { get; set; } = new();
         public List<Payment> Payments { get; set; } = new();
     }
 }

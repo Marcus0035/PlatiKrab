@@ -9,7 +9,6 @@ namespace PlatiKrab.Data
     {
         public DbSet<Player> Players { get; set; }
         public DbSet<Training> Trainings { get; set; }
-        public DbSet<PlayerTraining> PlayerTrainings { get; set; }
         public DbSet<Payment> Payments { get; set; }
         //public DbSet<PaymentPlayer> PaymentPlayers { get; set; }
 
@@ -27,168 +26,207 @@ namespace PlatiKrab.Data
             return $"Data source={dbPath}";
         }
 
+        public async Task<List<Player>> GetPlayersAsync()
+        {
+            using (var context = new PlatiKrabDbContext())
+            {
+                return await context.Players.Include(x => x.Trainings).Include(x => x.Payments).ToListAsync();
+            }
+        }
         public async Task<List<Player>> GetActivePlayersAsync()
         {
-            using var context = new PlatiKrabDbContext();
-            return await context.Players
-                                    .Where(x => x.Active)
-                                    .Include(x => x.PlayerTrainings).ThenInclude(x => x.Training)
-                                    .Include(x => x.Payments).ToListAsync();
+            using (var context = new PlatiKrabDbContext())
+            {
+                return await context.Players.Include(x => x.Trainings).Include(x => x.Payments).Where(x => x.Active).ToListAsync();
+            }
         }
-
-        public async Task<List<Player>> GetAllPlayersAsync()
-        {
-            using var context = new PlatiKrabDbContext();
-            return await context.Players
-                                    .Include(x => x.PlayerTrainings).ThenInclude(x => x.Training)
-                                    .Include(x => x.Payments).ToListAsync();
-        }
-
         public async Task AddPlayerAsync(Player player)
         {
-            using var context = new PlatiKrabDbContext();
-            context.Players.Add(player);
-            await context.SaveChangesAsync();
+            using (var context = new PlatiKrabDbContext())
+            {
+                context.Players.Add(player);
+                await context.SaveChangesAsync();
+            }
         }
-
-        public async Task RemovePlayerAsync(Player player)
+        public async Task UpdatePlayerAsync(Player player)
         {
-            using var context = new PlatiKrabDbContext();
-            var playerToChange = context.Players.First(x => x.PlayerId == player.PlayerId);
-            playerToChange.Active = false;
-            await context.SaveChangesAsync();
+            using (var context = new PlatiKrabDbContext())
+            {
+                context.Players.Update(player);
+                await context.SaveChangesAsync();
+            }
         }
-
+        public async Task DeletePlayerAsync(Player player)
+        {
+            using (var context = new PlatiKrabDbContext())
+            {
+                context.Players.First(x => x.PlayerId == player.PlayerId).Active = false;
+                await context.SaveChangesAsync();
+            }
+        }
         public async Task<List<Training>> GetTrainingsAsync()
         {
-            using var context = new PlatiKrabDbContext();
-            return await context.Trainings
-                .Include(x => x.PlayerTrainings).ThenInclude(x => x.Player)
-                .Include(x => x.Payment).ToListAsync();
+            using (var context = new PlatiKrabDbContext())
+            {
+                return await context.Trainings.Include(a => a.Payment).Include(a => a.Players).OrderByDescending(a => a.Date).ToListAsync();
+            }
         }
-
-        public async Task<Training> GetTrainingByIdAsync(int trainingId)
+        public async Task<List<Training>> GetUnPaidTrainingsAsync()
         {
-            using var context = new PlatiKrabDbContext();
-            return await context.Trainings
-                .Include(t => t.PlayerTrainings).ThenInclude(pt => pt.Player)
-                .Include(t => t.Payment)
-                .FirstAsync(t => t.TrainingId == trainingId);
+            using (var context = new PlatiKrabDbContext())
+            {
+                return await context.Trainings.Include(a => a.Payment).Include(a => a.Players).Where(a => a.Payment == null || !a.Payment.Paid).OrderByDescending(a => a.Date).ToListAsync();
+            }
         }
-
-
-
-        public async Task<List<Training>> GetUnpaidTrainingAsync()
-        {
-            using var context = new PlatiKrabDbContext();
-            return await context.Trainings.Include(x => x.PlayerTrainings).ThenInclude(x => x.Player)
-                .Include(x => x.Payment).Where(x => x.Payment == null || !x.Payment.Paid).ToListAsync(); ;
-        }
-
-        public async Task<List<Player>> GetPlayersOnTrainingAsync(Training t)
-        {
-            using var context = new PlatiKrabDbContext();
-            var training = await context.Trainings
-                .Include(x => x.PlayerTrainings).ThenInclude(x => x.Player)
-                .FirstAsync(x => x.TrainingId == t.TrainingId);
-
-
-            return training.PlayerTrainings.Select(x => x.Player).ToList();
-        }
-
         public async Task AddTrainingAsync(Training training)
         {
-            using var context = new PlatiKrabDbContext();
-            context.Trainings.Add(training);
-            await context.SaveChangesAsync();
+            using (var context = new PlatiKrabDbContext())
+            {
+                context.Trainings.Add(training);
+                await context.SaveChangesAsync();
+            }
         }
-
-        public async Task AddOrEditTraining(Training training, List<Player> players)
+        public async Task UpdateTrainingAsync(Training training)
         {
-            using var context = new PlatiKrabDbContext();
-
+            using (var context = new PlatiKrabDbContext())
+            {
+                context.Trainings.Update(training);
+                await context.SaveChangesAsync();
+            }
+        }
+        public async Task AddOrUpdateTraining(Training training)
+        {
             if (training.TrainingId == 0)
             {
-                await context.Trainings.AddAsync(training);
-                await context.SaveChangesAsync();
-
-                // Přidání nových PlayerTrainings
-                foreach (var player in players)
-                {
-                    var playerTraining = new PlayerTraining
-                    {
-                        PlayerId = player.PlayerId,
-                        TrainingId = training.TrainingId
-                    };
-                    context.PlayerTrainings.Add(playerTraining);
-                }
+                await AddTrainingAsync(training);
             }
             else
             {
-                var existingTraining = await context.Trainings
-                    .Include(t => t.PlayerTrainings)
-                    .FirstOrDefaultAsync(t => t.TrainingId == training.TrainingId);
+                await UpdateTrainingAsync(training);
+            }
+        }
+        public async Task DeleteTrainingAsync(Training training)
+        {
+            using (var context = new PlatiKrabDbContext())
+            {
+                context.Trainings.Remove(training);
+                await context.SaveChangesAsync();
+            }
+        }
+        public async Task DeleteTrainingByIdAsync(int trainingId)
+        {
+            using (var context = new PlatiKrabDbContext())
+            {
+                var training = context.Trainings.First(x => x.TrainingId == trainingId);
+                context.Trainings.Remove(training);
+                await context.SaveChangesAsync();
+            }
+        }
+        public async Task<List<Player>> GetPlayersFromTrainingAsync(int trainingId)
+        {
+            using var db = new PlatiKrabDbContext();
+            return await db.Trainings
+                     .Where(t => t.TrainingId == trainingId)
+                     .Include(t => t.Players)
+                     .SelectMany(t => t.Players)
+                     .ToListAsync();
+        }
+        public async Task UpdatePlayersOnTrainingAsync(int trainingId, List<Player> players)
+        {
+            using (var context = new PlatiKrabDbContext())
+            {
+                var training = context.Trainings
+                                      .Include(t => t.Players)
+                                      .FirstOrDefault(t => t.TrainingId == trainingId);
 
-                if (existingTraining != null)
+                if (training == null)
                 {
-                    // Aktualizace hlavních hodnot tréninku
-                    context.Entry(existingTraining).CurrentValues.SetValues(training);
+                    throw new ArgumentException($"Training with ID {trainingId} does not exist.");
+                }
 
-                    // Smazání všech existujících PlayerTrainings
-                    context.PlayerTrainings.RemoveRange(existingTraining.PlayerTrainings);
+                training.Players.Clear();
 
-                    // Přidání nových PlayerTrainings
-                    foreach (var player in players)
+                foreach (var player in players)
+                {
+                    var existingPlayer = context.Players.Find(player.PlayerId);
+
+                    if (existingPlayer != null)
                     {
-                        var playerTraining = new PlayerTraining
-                        {
-                            PlayerId = player.PlayerId,
-                            TrainingId = training.TrainingId
-                        };
-                        context.PlayerTrainings.Add(playerTraining);
+                        training.Players.Add(existingPlayer);
+                    }
+                    else
+                    {
+                        context.Players.Add(player);
+                        training.Players.Add(player);
                     }
                 }
+                await context.SaveChangesAsync();
             }
-
-            await context.SaveChangesAsync();
         }
-
-        public async Task<Dictionary<Player, int>> GetPlayersCountTrainings(List<Player> players)
+        public async Task<bool> IsTrainingPaidAsync(int trainingId)
         {
-            using var context = new PlatiKrabDbContext();
-            var playersCountTrainings = new Dictionary<Player, int>();
-            foreach (var player in players)
+            using (var context = new PlatiKrabDbContext())
             {
-                var count = await context.PlayerTrainings.CountAsync(x => x.PlayerId == player.PlayerId);
-                playersCountTrainings.Add(player, count);
+                return await context.Payments.AnyAsync(p => p.TrainingId == trainingId && p.Paid);
             }
-            return playersCountTrainings;
         }
-
-        public async Task<Dictionary<Player, int>> GetPlayersCountPayments(List<Player> players)
+        public async Task<bool> DoesTrainingHavePayment(int trainingId)
         {
-            using var context = new PlatiKrabDbContext();
-            var playersCountPayments = new Dictionary<Player, int>();
-            foreach (var player in players)
+            using (var context = new PlatiKrabDbContext())
             {
-                var count = await context.Payments.CountAsync(x => x.PlayerWhoPays.PlayerId == player.PlayerId);
+                return await context.Payments.AnyAsync(p => p.TrainingId == trainingId);
             }
-            return playersCountPayments;
         }
-
-
-        public async Task AddPaymentAsync(Payment payment)
+        public async Task<List<Payment>> GetPaymentsAsync()
         {
-            using var context = new PlatiKrabDbContext();
-            context.Payments.Add(payment);
-            await context.SaveChangesAsync();
+            using (var context = new PlatiKrabDbContext())
+            {
+                return await context.Payments.Include(a => a.Player).Include(a => a.Training).ToListAsync();
+            }
         }
-
+        public async Task AddPayment(Payment payment)
+        {
+            using (var context = new PlatiKrabDbContext())
+            {
+                var existingPayment = context.Payments.Find(payment.PaymentId);
+                if (existingPayment == null)
+                {
+                    context.Entry(payment.Player).State = EntityState.Unchanged;
+                    context.Entry(payment.Training).State = EntityState.Unchanged;
+                    context.Payments.Add(payment);
+                }
+                else
+                {
+                    context.Entry(existingPayment).CurrentValues.SetValues(payment);
+                }
+                await context.SaveChangesAsync();
+            }
+        }
         public async Task UpdatePaymentAsync(Payment payment)
         {
-            using var context = new PlatiKrabDbContext();
-            context.Payments.Update(payment);
-            await context.SaveChangesAsync();
+            using (var context = new PlatiKrabDbContext())
+            {
+                context.Payments.Update(payment);
+                await context.SaveChangesAsync();
+            }
+        }
+        public async Task DeletePaymentAsync(Payment payment)
+        {
+            using (var context = new PlatiKrabDbContext())
+            {
+                context.Payments.Remove(payment);
+                await context.SaveChangesAsync();
+            }
+        }
+        public async Task ChangePaymentStatusAsync(Training training)
+        {
+            using (var context = new PlatiKrabDbContext())
+            {
+                var payment = context.Payments.First(p => p.TrainingId == training.TrainingId);
+                payment.Paid = !payment.Paid;
+                context.Payments.Update(payment);
+                await context.SaveChangesAsync();
+            }
         }
     }
 }

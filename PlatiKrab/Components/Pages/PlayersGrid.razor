@@ -35,7 +35,7 @@
                 <SelectColumn T="Player" />
                 <PropertyColumn Property="p => p.PlayerId" Title="Id" />
                 <PropertyColumn Property="p => p.FirstName + ' ' + p.LastName" Title="Name" />
-                <PropertyColumn Property="p => p.PlayerTrainings.Count()" Title="Trainings" />
+                <PropertyColumn Property="p => p.Trainings.Count()" Title="Trainings" />
                 <PropertyColumn Property="p => p.Payments.Count()" Title="Payments" />
                 @if (_showNotActivePlayers)
                 {
@@ -86,7 +86,7 @@
     private async Task ToggleAllActivePlayer()
     {
         _showNotActivePlayers = !_showNotActivePlayers;
-        _players = _showNotActivePlayers ? await _context.GetAllPlayersAsync() : await _context.GetActivePlayersAsync();
+        _players = _showNotActivePlayers ? await _context.GetPlayersAsync() : await _context.GetActivePlayersAsync();
     }
 
     [Inject] private IDialogService DialogService { get; set; }
@@ -110,7 +110,7 @@
     {
         if (_selectedPlayer != null && _selectedPlayer.Active)
         {
-            await _context.RemovePlayerAsync(_selectedPlayer);
+            await _context.DeletePlayerAsync(_selectedPlayer);
             _players.Remove(_selectedPlayer);
             _selectedPlayer = null;
 
