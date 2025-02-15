@@ -157,10 +157,6 @@
         }
         else if (!training.Payment.Paid)
         {
-            await ShareQRCode();
-        }
-        else if (!training.Payment.Paid)
-        {
             await OpenChangePaymentStatusDialog(training);
         }
     }
