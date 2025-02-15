@@ -7,8 +7,8 @@ namespace PlatiKrab.Services
     public class QRService
     {
         private static readonly HttpClient client = new HttpClient();
-        private readonly string accountNumber = "1186465045";
-        private readonly string bankCode = "3030";
+        private readonly string accountNumber = ""; //Add Yours
+        private readonly string bankCode = ""; //Add Yours
 
         public async Task<string> GetQRCodeAsync(DateTime dateTime)
         {

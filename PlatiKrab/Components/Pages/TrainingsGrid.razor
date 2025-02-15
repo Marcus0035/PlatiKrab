@@ -3,6 +3,7 @@
 @using PlatiKrab.Services
 @inject PlatiKrabDbContext _context
 @inject NavigationManager _navigationManager
+@inject QRService _qrService
 @inject ISnackbar _snackBar
 
 @page "/"
@@ -153,6 +154,10 @@
         else if (training.Payment.Paid)
         {
             _snackBar.Add($"Training {training.Date.ToString("dd-MM-yyyy")} is already paid", Severity.Info);
+        }
+        else if (!training.Payment.Paid)
+        {
+            await ShareQRCode();
         }
         else if (!training.Payment.Paid)
         {
