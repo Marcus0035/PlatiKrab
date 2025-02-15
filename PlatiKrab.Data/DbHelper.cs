@@ -10,7 +10,6 @@ namespace KeyChordFinder.Data
         public static void CopyIfDoesntExist(string dbName, Assembly assembly)
         {
             string dbPath = GetDbPath(dbName);
-            //bool overwrite = true;
             if (!File.Exists(dbPath))
             {
                 using (var stream = GetEmbeddedResourceStream(dbName, assembly))

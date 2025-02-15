@@ -1,5 +1,6 @@
 ﻿@using PlatiKrab.Data
 @using PlatiKrab.Data.Models
+@using PlatiKrab.Services
 @inject PlatiKrabDbContext _context
 @inject NavigationManager _navigationManager
 @inject ISnackbar _snackBar
@@ -40,13 +41,12 @@
     }
     else
     {
-        <MudDataGrid T="Training" Items="_trainings" ShowColumnOptions="false" RowClick="OpenTrainingDetails">
+        <MudDataGrid T="Training" Items="_trainings" ShowColumnOptions="false" RowClick="OpenTrainingDetails" MultiSelection="false">
             <Columns>
-                <SelectColumn T="Training" />
                 <PropertyColumn Property="p => p.TrainingId" Title="Id" />
                 <PropertyColumn Property='p => p.Date.ToString("dd-MM-yyyy")' Title="Date" />
                 <PropertyColumn Property="p => p.Players.Count()" Title="Players" />
-                <PropertyColumn Property='p => p.Payment != null && p.Payment.Player != null ? $"{p.Payment.Player.FirstName} {p.Payment.Player.LastName}" : "Unknown"' Title="Who Pays" />
+                <PropertyColumn Property='p => p.Payment != null && p.Payment.Player != null ? $"{p.Payment.Player.FirstName} {p.Payment.Player.LastName}" : "Unknown"' Title="Pays" />
                 @if (_showPaidTrainings)
                 {
                     <PropertyColumn Property='p => p.Payment != null ? (p.Payment.Paid ? "Yes" : "No") : "Unknown"' Title="Paid" />
@@ -60,7 +60,10 @@
     }
 </MudContainer>
 
-<MudMessageBox @ref="_mudMessageBox" Title="Today?">
+
+@* Calendar MessageBox *@
+
+<MudMessageBox @ref="_calendarMessageBox" Title="Today?">
     <MessageContent>
         Was the training today: @DateTime.Now.ToString("dd-MM-yyyy")?
     </MessageContent>
@@ -72,19 +75,22 @@
     </NoButton>
 </MudMessageBox>
 
+
+
 @code
 {
-    private MudMessageBox _mudMessageBox;
+    private MudMessageBox _calendarMessageBox;
 
     private async Task OpenNewTrainingMessageBox()
     {
         DialogOptions _width = new() { MaxWidth = MaxWidth.Small, FullWidth = true };
-        bool? result = await _mudMessageBox.ShowAsync(_width);
+        bool? result = await _calendarMessageBox.ShowAsync(_width);
         StateHasChanged();
     }
 }
 
 @code {
+
     private List<Training> _trainings = new();
 
     private Training? _selectedTraining = null;
@@ -133,6 +139,8 @@
             _trainings = await _context.GetUnPaidTrainingsAsync();
         }
     }
+
+    
 
     private async Task OpenTrainingDetails(DataGridRowClickEventArgs<Training> args)
     {
