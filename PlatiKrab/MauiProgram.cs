@@ -31,6 +31,7 @@ namespace PlatiKrab
             //Add Context
             builder.Services.AddDbContext<PlatiKrabDbContext>();
             builder.Services.AddSingleton<PlayersService>();
+            builder.Services.AddSingleton<QRService>();
 
 
 #if DEBUG
