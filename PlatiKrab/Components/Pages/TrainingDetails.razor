@@ -34,9 +34,11 @@
                 <MudPaper Class="pa-1 mb-5" Elevation="4">
                     <MudText Typo="Typo.h6" Class="d-flex justify-content-center">Players not on training</MudText>
                 </MudPaper>
+                @if (_playersNotOnTraining.Any())
+                {
                 <MudPaper Class="pa-4 mb-5 rounded-lg" Elevation="4">
                     <MudList T="Player">
-                        @foreach (var player in _playerNotOnTraining)
+                        @foreach (var player in _playersNotOnTraining)
                         {
                             <MudButton Variant="Variant.Filled" Color="Color.Primary"
                             Class="mb-3" OnClick="() => AddPlayerToTraining(player)" FullWidth="true">
@@ -45,12 +47,15 @@
                         }
                     </MudList>
                 </MudPaper>
+                }
             </MudItem>
             @* Player On Training *@
             <MudItem xs="12" sm="6">
                 <MudPaper Class="pa-1 mb-5" Elevation="4">
                     <MudText Typo="Typo.h6" Class="d-flex justify-content-center">Players on training</MudText>
                 </MudPaper>
+            @if (_playersOnTraining.Any())
+            {
                 <MudPaper Class="pa-4 mb-5 rounded-lg" Elevation="4">
                     <MudList T="Player">
                         @foreach (var player in _playersOnTraining)
@@ -62,6 +67,7 @@
                         }
                     </MudList>
                 </MudPaper>
+                }
             </MudItem>
         </MudGrid>
     }
@@ -88,7 +94,7 @@
     private Training? _selectedTraining;
 
     private List<Player> _playersOnTraining = new List<Player>();
-    private List<Player> _playerNotOnTraining = new List<Player>();
+    private List<Player> _playersNotOnTraining = new List<Player>();
 
     [Parameter]
     public int TrainingId { get; set; }
@@ -108,20 +114,20 @@
     {
         _selectedTraining = training;
         _playersOnTraining = await _context.GetPlayersFromTrainingAsync(_selectedTraining.TrainingId);
-        _playerNotOnTraining = _players.Where(p => !_playersOnTraining.Any(pt => pt.PlayerId == p.PlayerId)).ToList();
+        _playersNotOnTraining = _players.Where(p => !_playersOnTraining.Any(pt => pt.PlayerId == p.PlayerId)).ToList();
     }
 
     // methods to switch players between lists
     private void AddPlayerToTraining(Player player)
     {
         _playersOnTraining.Add(player);
-        _playerNotOnTraining = _players.Where(p => !_playersOnTraining.Any(pt => pt.PlayerId == p.PlayerId)).ToList();
+        _playersNotOnTraining = _players.Where(p => !_playersOnTraining.Any(pt => pt.PlayerId == p.PlayerId)).ToList();
     }
 
     private void RemovePlayerFromTraining(Player player)
     {
         _playersOnTraining.Remove(player);
-        _playerNotOnTraining = _players.Where(p => !_playersOnTraining.Any(pt => pt.PlayerId == p.PlayerId)).ToList();
+        _playersNotOnTraining = _players.Where(p => !_playersOnTraining.Any(pt => pt.PlayerId == p.PlayerId)).ToList();
     }
 
 

@@ -11,20 +11,37 @@
 <MudSnackbarProvider />
 
 <MudLayout>
-    <MudAppBar>
-        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
-        PlatíKrab?
-    </MudAppBar>
-    <MudDrawer @bind-Open="@_drawerOpen">
-        <NavMenu />
-    </MudDrawer>
+    <MudHidden Breakpoint="Breakpoint.Xs">
+        <MudAppBar>
+            <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
+            PlatiKrab?
+        </MudAppBar>
+        <MudDrawer @bind-Open="@_drawerOpen" Variant="DrawerVariant.Temporary" ClipMode="DrawerClipMode.Always">
+            <NavMenu />
+        </MudDrawer>
+    </MudHidden>
+    <MudHidden Breakpoint="Breakpoint.SmAndUp">
+        <MudAppBar>
+            <MudIcon Icon="@Icons.Material.Filled.SportsVolleyball" Color="Color.Inherit" />
+            <MudText Class="ms-3">PlatiKrab?</MudText>
+        </MudAppBar>
+        <MudAppBar Bottom="true" Color="Color.Primary" Elevation="10">
+            <NavMenuPhone />
+        </MudAppBar>
+    </MudHidden>
     <MudMainContent>
         @Body
     </MudMainContent>
 </MudLayout>
 
+<MudThemeProvider />
+<MudThemeProvider @bind-IsDarkMode="@_isDarkMode" Theme="_theme" />
+
 @code {
-    bool _drawerOpen = true;
+    private readonly MudTheme _theme = new();
+    private bool _isDarkMode = true;
+
+    bool _drawerOpen;
 
     void DrawerToggle()
     {

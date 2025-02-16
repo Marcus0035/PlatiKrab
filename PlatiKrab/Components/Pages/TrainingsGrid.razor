@@ -42,7 +42,7 @@
     }
     else
     {
-        <MudDataGrid T="Training" Items="_trainings" ShowColumnOptions="false" RowClick="OpenTrainingDetails" MultiSelection="false">
+        <MudDataGrid T="Training" Items="_trainings" ShowColumnOptions="false" RowClick="OpenTrainingDetails" Striped>
             <Columns>
                 <PropertyColumn Property="p => p.TrainingId" Title="Id" />
                 <PropertyColumn Property='p => p.Date.ToString("dd-MM-yyyy")' Title="Date" />

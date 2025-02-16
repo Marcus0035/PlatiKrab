@@ -39,7 +39,6 @@
         {
             var p = new Player() { FirstName = _name, LastName = _lastName };
             await _context.AddPlayerAsync(p);
-            Snackbar.Add("Player added", Severity.Success);
             NavigationManager.NavigateTo("/player-list");
         }
     }
