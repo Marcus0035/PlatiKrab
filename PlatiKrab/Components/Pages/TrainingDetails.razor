@@ -1,0 +1,204 @@
+﻿@using PlatiKrab.Data
+@using PlatiKrab.Data.Models
+@using PlatiKrab.Services
+
+@inject PlatiKrabDbContext _context
+@inject PlayersService _playersService
+@inject NavigationManager _navigationManager
+@inject QRService _qrService
+@inject ISnackbar Snackbar
+
+@page "/training-details/{TrainingId:int?}"
+
+<MudContainer MaxWidth="MaxWidth.Large">
+    <MudPaper Class="pa-4 mb-5 d-flex" Elevation="4">
+        <MudSelect Label="Select Training" T="Training" Value="_selectedTraining" ValueChanged="OnTrainingChanged">
+            @foreach (var training in _trainings)
+            {
+                <MudSelectItem Value="@training">@training.Date.ToString("dd-MM-yyyy")</MudSelectItem>
+            }
+        </MudSelect>
+        <MudButton Class="ms-5" Color="Color.Primary" Variant="Variant.Filled" Disabled="@_saveDisable" OnClick="SaveTraining">
+            <MudIcon Icon="@Icons.Material.Filled.Save" Title="Favorite" />
+        </MudButton>
+        <MudButton Class="ms-5" Color="Color.Success" Variant="Variant.Filled" Disabled="@_payDisable" OnClick="WhoPay">
+            <MudIcon Icon="@Icons.Material.Filled.Payment" Title="Favorite" />
+        </MudButton>
+    </MudPaper>
+
+    @if (_selectedTraining != null)
+    {
+        @* Player Not On Training *@
+        <MudGrid>
+            <MudItem xs="12" sm="6">
+                <MudPaper Class="pa-1 mb-5" Elevation="4">
+                    <MudText Typo="Typo.h6" Class="d-flex justify-content-center">Players not on training</MudText>
+                </MudPaper>
+                @if (_playersNotOnTraining.Any())
+                {
+                    <MudPaper Class="pa-4 mb-5 rounded-lg" Elevation="4">
+                        <MudList T="Player">
+                            @foreach (var player in _playersNotOnTraining)
+                            {
+                                <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                                Class="mb-3" OnClick="() => AddPlayerToTraining(player)" FullWidth="true">
+                                    @player.FirstName @player.LastName
+                                </MudButton>
+                            }
+                        </MudList>
+                    </MudPaper>
+                }
+            </MudItem>
+            @* Player On Training *@
+            <MudItem xs="12" sm="6">
+                <MudPaper Class="pa-1 mb-5" Elevation="4">
+                    <MudText Typo="Typo.h6" Class="d-flex justify-content-center">Players on training</MudText>
+                </MudPaper>
+                @if (_playersOnTraining.Any())
+                {
+                    <MudPaper Class="pa-4 mb-5 rounded-lg" Elevation="4">
+                        <MudList T="Player">
+                            @foreach (var player in _playersOnTraining)
+                            {
+                                <MudButton Variant="Variant.Filled" Color="Color.Secondary"
+                                Class="mb-3" OnClick="() => RemovePlayerFromTraining(player)" FullWidth="true"
+                                >@player.FirstName @player.LastName
+                                </MudButton>
+                            }
+                        </MudList>
+                    </MudPaper>
+                }
+            </MudItem>
+        </MudGrid>
+    }
+</MudContainer>
+
+
+@* QR MessageBox *@
+
+<MudMessageBox @ref="_SaveMessageBox" Title="Save & Share QR Code?">
+    <MessageContent>
+        Player: <MudText HtmlTag="b">@playerWhoPay.FirstName @playerWhoPay.LastName</MudText> will pay.
+    </MessageContent>
+    <YesButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Success" Class="ms-5" StartIcon="@Icons.Material.Filled.QrCode" OnClick="SaveWithQRCode">With QR!</MudButton>
+    </YesButton>
+    <NoButton>
+        <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="SaveOnly">Save Only</MudButton>
+    </NoButton>
+</MudMessageBox>
+
+@code {
+    private List<Player> _players = new List<Player>();
+    private List<Training> _trainings = new List<Training>();
+    private Training? _selectedTraining;
+
+    private List<Player> _playersOnTraining = new List<Player>();
+    private List<Player> _playersNotOnTraining = new List<Player>();
+
+    [Parameter]
+    public int TrainingId { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        _players = await _context.GetActivePlayersAsync();
+        _trainings = await _context.GetUnPaidTrainingsAsync();
+        if (TrainingId != 0)
+        {
+            _selectedTraining = _trainings.First(t => t.TrainingId == TrainingId);
+            await OnTrainingChanged(_selectedTraining);
+        }
+    }
+
+    private async Task OnTrainingChanged(Training training)
+    {
+        _selectedTraining = training;
+        TrainingId = _selectedTraining.TrainingId;
+        _playersOnTraining = await _context.GetPlayersFromTrainingAsync(_selectedTraining.TrainingId);
+        _playersNotOnTraining = _players.Where(p => !_playersOnTraining.Any(pt => pt.PlayerId == p.PlayerId)).ToList();
+    }
+
+    // methods to switch players between lists
+    private void AddPlayerToTraining(Player player)
+    {
+        _playersOnTraining.Add(player);
+        _playersNotOnTraining = _players.Where(p => !_playersOnTraining.Any(pt => pt.PlayerId == p.PlayerId)).ToList();
+    }
+
+    private void RemovePlayerFromTraining(Player player)
+    {
+        _playersOnTraining.Remove(player);
+        _playersNotOnTraining = _players.Where(p => !_playersOnTraining.Any(pt => pt.PlayerId == p.PlayerId)).ToList();
+    }
+
+
+    //bools for save buttons
+    private bool _saveDisable => _selectedTraining == null;
+    private bool _payDisable => _saveDisable || _selectedTraining?.Payment != null || _playersOnTraining.Count == 0;
+
+
+    private async Task SaveTraining()
+    {
+        await _context.UpdatePlayersOnTrainingAsync((int)_selectedTraining!.TrainingId, _playersOnTraining);
+        Snackbar.Add("Training saved", Severity.Success);
+        _navigationManager.NavigateTo($"/");
+    }
+
+    // Method to find player who will pay and save them
+
+    Player playerWhoPay = new Player();
+    private async Task WhoPay()
+    {
+        Training training = _trainings.First(x => x.TrainingId == TrainingId);
+        if (training.Payment == null && _playersOnTraining.Count > 0)
+        {
+            await _context.UpdatePlayersOnTrainingAsync((int)_selectedTraining!.TrainingId, _playersOnTraining);
+            playerWhoPay = _playersService.GetPlayerWithMostRatio(_playersOnTraining);
+        }
+        await OpenSaveMessageBox();
+    }
+
+    //QRCode
+    private async Task ShareQRCode()
+    {
+        string filePath = await _qrService.GetQRCodeAsync(_selectedTraining.Date);
+
+        await Share.RequestAsync(new ShareFileRequest
+            {
+                Title = "Share QR Code",
+                File = new ShareFile(filePath)
+            });
+    }
+
+    //QRCode MessageBox
+    private MudMessageBox _SaveMessageBox;
+    DialogOptions _maxWidth = new() { MaxWidth = MaxWidth.Small, FullWidth = true };
+
+    private async Task OpenSaveMessageBox()
+    {
+        bool? result = await _SaveMessageBox.ShowAsync(_maxWidth);
+        StateHasChanged();
+    }
+
+
+    //MessageBoxes methods
+    private async Task TaskSavePlayerWhoPay()
+    {
+        var training = _trainings.First(t => t.TrainingId == TrainingId);
+        var newPayment = new Payment(false, (int)TrainingId!, training, playerWhoPay.PlayerId, playerWhoPay);
+        await _context.AddPayment(newPayment);
+    }
+
+    private async Task SaveWithQRCode()
+    {
+        await TaskSavePlayerWhoPay();
+        await ShareQRCode();
+        _navigationManager.NavigateTo($"/");
+    }
+
+    private async Task SaveOnly()
+    {
+        await TaskSavePlayerWhoPay();
+        _navigationManager.NavigateTo($"/");
+    }
+}

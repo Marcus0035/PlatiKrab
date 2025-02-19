@@ -1,0 +1,68 @@
+﻿@using PlatiKrab.Data.Models
+@using PlatiKrab.Data
+
+@inherits LayoutComponentBase
+
+@* Required *@
+<MudThemeProvider />
+<MudPopoverProvider />
+
+@* Needed for dialogs *@>
+<MudDialogProvider />
+
+@* Needed for snackbars *@>
+<MudSnackbarProvider />
+
+<MudLayout>
+    <MudHidden Breakpoint="Breakpoint.Xs">
+        <MudAppBar>
+            <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
+            <MudText Class="ms-3">PlatiKrab?</MudText>
+
+            <!-- Add MudSpacer to push the settings button to the right -->
+            <MudSpacer /> <!-- This will push the following content to the right -->
+            <MudIconButton Icon="@Icons.Material.Filled.Settings" Color="Color.Inherit" Href="/settings" Edge="Edge.End" />
+        </MudAppBar>
+        <MudDrawer @bind-Open="@_drawerOpen" Variant="DrawerVariant.Temporary" ClipMode="DrawerClipMode.Always">
+            <NavMenu />
+        </MudDrawer>
+    </MudHidden>
+
+    <MudHidden Breakpoint="Breakpoint.SmAndUp">
+        <MudAppBar>
+            <MudIcon Icon="@Icons.Material.Filled.SportsVolleyball" Color="Color.Inherit" />
+            <MudText Class="ms-3">PlatiKrab?</MudText>
+
+            <!-- Add MudSpacer to push the settings button to the right -->
+            <MudSpacer /> <!-- This will push the following content to the right -->
+            <MudIconButton Icon="@Icons.Material.Filled.Settings" Color="Color.Inherit" Href="/settings" Edge="Edge.End" />
+        </MudAppBar>
+        <MudAppBar Bottom="true" Color="Color.Primary" Elevation="10">
+            <NavMenuPhone />
+        </MudAppBar>
+    </MudHidden>
+
+    <MudMainContent>
+        @Body
+    </MudMainContent>
+</MudLayout>
+
+<MudThemeProvider @bind-IsDarkMode="@_isDarkMode" Theme="_theme" />
+
+@code {
+    private readonly MudTheme _theme = new();
+    private bool _isDarkMode;
+
+    bool _drawerOpen;
+
+    void DrawerToggle()
+    {
+        _drawerOpen = !_drawerOpen;
+    }
+
+    protected override void OnInitialized()
+    {
+        var userSettings = PlatiKrabDbContext.GetUserSettings();
+        _isDarkMode = userSettings.DarkMode;
+    }
+}

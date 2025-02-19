@@ -1,0 +1,45 @@
+﻿@using PlatiKrab.Data
+@using PlatiKrab.Data.Models
+
+@inject NavigationManager NavigationManager
+@inject PlatiKrabDbContext _context
+@inject ISnackbar Snackbar
+
+@page "/player-add"
+
+<MudContainer MaxWidth="MaxWidth.Small">
+    <MudPaper Class="pa-4 mb-5" Elevation="4">
+        <MudText Typo="Typo.h6">Add Player</MudText>
+    </MudPaper>
+    <MudPaper Class="pa-4" Elevation="4">
+        <MudItem xs="12" Class="mb-5">
+            <MudTextField T="string" Label="Name" Variant="Variant.Text" Required="true" @bind-Value="_name"/>
+        </MudItem>
+
+        <MudItem xs="12" Class="mb-5">
+            <MudTextField T="string" Label="Last Name" Variant="Variant.Text" Required="true" @bind-Value="_lastName" />
+        </MudItem>
+
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SavePlayer" FullWidth>Save</MudButton>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private string _name = string.Empty;
+    private string _lastName = string.Empty;
+
+    private async Task SavePlayer()
+    {
+        if (string.IsNullOrWhiteSpace(_name) || string.IsNullOrWhiteSpace(_lastName))
+        {
+            Snackbar.Add("Please Fill Both Inputs", Severity.Error);
+            return;
+        }
+        else
+        {
+            var p = new Player() { FirstName = _name, LastName = _lastName };
+            await _context.AddPlayerAsync(p);
+            NavigationManager.NavigateTo("/player-list");
+        }
+    }
+}

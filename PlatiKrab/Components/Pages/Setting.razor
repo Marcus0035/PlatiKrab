@@ -1,0 +1,41 @@
+﻿@using PlatiKrab.Data.Models
+@using PlatiKrab.Data
+@inject PlatiKrabDbContext _context
+@inject ISnackbar Snackbar
+
+@page "/settings"
+
+<MudContainer MaxWidth="MaxWidth.Medium">
+    <MudPaper Class="pa-4 mb-5" Elevation="4">
+        <MudGrid>
+            <MudItem xs="12">
+                <MudSwitch Color="Color.Primary" Label="Dark Mode" @bind-Value="userSettings.DarkMode" />
+            </MudItem>
+            <MudItem xs="12">
+                <MudTextField Label="Account Number" Variant="Variant.Outlined" @bind-Value="userSettings.AccountNumber" />
+            </MudItem>
+            <MudItem xs="12">
+                <MudTextField Label="Bank Code" Variant="Variant.Outlined" @bind-Value="userSettings.BankCode" />
+            </MudItem>
+            <MudItem xs="12">
+                <MudButton FullWidth OnClick="SaveSettings" Color="Color.Primary" Variant="Variant.Filled">Save</MudButton>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private readonly MudTheme _theme = new();
+    private UserSettings userSettings = new UserSettings();
+
+    protected override void OnInitialized()
+    {
+        userSettings = PlatiKrabDbContext.GetUserSettings();
+    }
+
+    private void SaveSettings()
+    {
+        PlatiKrabDbContext.UpdateUserSettings(userSettings);
+        Snackbar.Add("Settings saved", Severity.Success);
+    }
+}

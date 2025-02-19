@@ -1,0 +1,123 @@
+﻿@using PlatiKrab.Data
+@using PlatiKrab.Data.Models
+@inject PlatiKrabDbContext _context
+@inject NavigationManager NavigationManager
+
+@page "/player-list"
+
+<MudContainer MaxWidth="MaxWidth.Large">
+    @if (_players == null)
+    {
+        <MudText Typo="Typo.h6">Loading...</MudText>
+    }
+    else if (!_players.Any())
+    {
+        <MudText Typo="Typo.h6">No players found.</MudText>
+        <MudIconButton Icon="@Icons.Material.Filled.Add" aria-label="Add" OnClick="AddPlayer" />
+    }
+    else
+    {
+        <MudDataGrid Items="_players" QuickFilter="@_quickFilter" @bind-SelectedItem="_selectedPlayer" Striped Elevation="4" Class="mb-10">
+            <ToolBarContent>
+                <MudTextField @bind-Value="_searchString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
+                AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+                <MudTooltip Text="Add">
+                    <MudIconButton Icon="@Icons.Material.Filled.Add" OnClick="AddPlayer" />
+                </MudTooltip>
+                <MudTooltip Text="Delete" Color="Color.Error">
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Disabled="@(_selectedPlayer == null)" OnClick="OpenDeleteDialog" />
+                </MudTooltip>
+                <MudTooltip Text="Active/All Player" Color="Color.Primary">
+                    <MudSwitch T="bool" Value="_showNotActivePlayers" ValueChanged="ToggleAllActivePlayer" Color="Color.Primary" />
+                </MudTooltip>
+            </ToolBarContent>
+            <Columns>
+                <SelectColumn T="Player" />
+                <PropertyColumn Property="p => p.PlayerId" Title="Id" />
+                <PropertyColumn Property="p => p.FirstName + ' ' + p.LastName" Title="Name" />
+                <PropertyColumn Property="p => p.Trainings.Count()" Title="Trainings" />
+                <PropertyColumn Property="p => p.Payments.Count()" Title="Payments" />
+                @if (_showNotActivePlayers)
+                {
+                    <PropertyColumn Property="p => p.Active" Title="Active" />
+                }
+            </Columns>
+            <PagerContent>
+                <MudDataGridPager T="Player" />
+            </PagerContent>
+        </MudDataGrid>
+    }
+</MudContainer>
+
+@code {
+    private List<Player> _players = new();
+    private Player? _selectedPlayer = null;
+    private string _searchString = string.Empty;
+    private bool _showNotActivePlayers = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _players = await _context.GetActivePlayersAsync();
+    }
+
+    private Func<Player, bool> _quickFilter => x =>
+    {
+        if (string.IsNullOrWhiteSpace(_searchString))
+            return true;
+
+        if (x.PlayerId.ToString().Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if (x.FirstName.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if ($"{x.FirstName} {x.LastName}".Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if ($"{x.LastName} {x.FirstName}".Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if (x.LastName.Contains(_searchString))
+            return true;
+
+        return false;
+    };
+
+    private async Task ToggleAllActivePlayer()
+    {
+        _showNotActivePlayers = !_showNotActivePlayers;
+        _players = _showNotActivePlayers ? await _context.GetPlayersAsync() : await _context.GetActivePlayersAsync();
+    }
+
+    [Inject] private IDialogService DialogService { get; set; }
+    private async Task OpenDeleteDialog()
+    {
+        DialogOptions _width = new() { MaxWidth = MaxWidth.Small, FullWidth = true };
+        bool? result = await DialogService.ShowMessageBox(
+            "Warning",
+            "Deleting can not be undone!",
+            yesText: "Delete!", cancelText: "Cancel",
+            options: _width);
+        StateHasChanged();
+
+        if (result == true && _selectedPlayer!.Active)
+        {
+            await RemovePlayer();
+        }
+    }
+
+    private async Task RemovePlayer()
+    {
+        if (_selectedPlayer != null && _selectedPlayer.Active)
+        {
+            await _context.DeletePlayerAsync(_selectedPlayer);
+            _players.Remove(_selectedPlayer);
+            _selectedPlayer = null;
+
+        }
+    }
+    private void AddPlayer()
+    {
+        NavigationManager.NavigateTo("/player-add");
+    }
+}
